@@ -11,9 +11,5 @@ def create_app():
 
     # Register blueprints/routes
     app.register_blueprint(api_bp)
-
-    @app.route('/hello')
-    def hello():
-        return 'Hello, World!'
     
     return app
