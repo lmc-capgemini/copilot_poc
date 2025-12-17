@@ -4,7 +4,26 @@ from flask_restx import Namespace, Resource, fields
 api = Namespace('inventory', description='Inventory operations')
 
 # Create db
-db = []
+db = [
+    {
+        'id': 0,
+        'name': 'Luminous',
+        'quantity': 220,
+        'ppu': 12.50,
+    },
+    {
+        'id': 1,
+        'name': 'Orbital',
+        'quantity': 1130,
+        'ppu': 11.11,
+    },
+    {
+        'id': 2,
+        'name': 'James',
+        'quantity': 464,
+        'ppu': 19.84,
+    }
+]
 
 # --- MODELS ---
 
@@ -14,7 +33,6 @@ inventory_model = api.model('Inventory', {
     'name': fields.String,
     'quantity': fields.Integer,
     'ppu': fields.Float,
-    'isAvailable': fields.Boolean
 })
 
 inventory_list_model = api.model('InventoryList', {
@@ -36,6 +54,7 @@ class InventoryList(Resource):
             'total': len(db)
         }
     
+
     @api.doc('create_inventory')
     @api.expect(inventory_model)
     @api.marshal_with(inventory_model, code=201)
@@ -43,7 +62,16 @@ class InventoryList(Resource):
         '''
         Creates a new inventory item
         '''
-        return True
+        data = request.json
+        new_inventory = {
+            'id': len(db),
+            'name': data['name'],
+            'quantity': data['quantity'],
+            'ppu': data['ppu']
+        }
+        db.append(new_inventory)
+        return new_inventory, 201
+    
     
 @api.route('/<int:id>')
 @api.param('id', 'The inventory ID')
@@ -55,22 +83,38 @@ class Inventory(Resource):
         '''
         Returns an inventory item
         '''
-        return True
-    
+        for item in db:
+            if item['id'] == id:
+                return item
+
+
     @api.doc('update_inventory')
     @api.expect(inventory_model)
     @api.marshal_with(inventory_model)
+    @api.response(404, 'Inventory item not found')
     def put(self, id):
         '''
         Updates an inventory item
         '''
-        return True
-    
+        data = request.json
+
+        for item in db:
+            if item['id'] == id:
+                item['name'] = data['name']
+                item['quantity'] = data['quantity']
+                item['ppu'] = data['ppu']
+
+                return item
+
+
     @api.doc('delete_inventory')
     @api.response(204, 'Inventory item deleted')
+    @api.response(404, 'Inventory item not found')
     def delete(self, id):
         '''
         Delete an inventory item
         '''
-        return 204
-    
+        for item in db:
+            if item['id'] == id:
+                db.remove(item)
+                return "Inventory item removed"
